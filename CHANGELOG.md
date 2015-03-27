@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.15.0
+
+Added:
+
+* Adds serialize/loadEvents to the DispatcherRecorder. You can now transfer events between different alt instances and machines. [commit](c18b7f2)
+* You can now get a list of a store's bound listeners with `boundListeners`. [commit](e76ae26)
+* Testing has been made even easier with access to the original store class with `StoreModel`. [commit](e76ae26)
+* takeSnapshot now allows you to take a snapshot of a single store. [commit](98b3c04)
+* `rollback` and `flush` now emit change events. [commit](44ad1de)
+* Adds AltManagerUtil which lets you manage multiple instances of alt. [commit](a901e9c)
+
+Fixed:
+
+* Fixes build on Windows. [commit](42d8ca4)
+* If a non-store is passed to bootstrap it no longer crashes. [commit](b458450)
+* Added the `snapshot` method back in. [commit](5767ae6)
+
 ## 0.14.5
 
 Fixed:

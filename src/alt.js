@@ -235,7 +235,7 @@ const StoreMixinEssentials = {
 }
 
 const setAppState = (instance, data, onStore) => {
-  const obj = JSON.parse(data)
+  const obj = instance.deserialize(data)
   Object.keys(obj).forEach((key) => {
     const store = instance.stores[key]
     if (store) {
@@ -263,14 +263,14 @@ const snapshot = (instance, ...storeNames) => {
 
 const saveInitialSnapshot = (instance, key) => {
   const state = instance.stores[key][STATE_CONTAINER]
-  const initial = JSON.parse(instance[INIT_SNAPSHOT])
+  const initial = instance.deserialize(instance[INIT_SNAPSHOT])
   initial[key] = state
-  instance[INIT_SNAPSHOT] = JSON.stringify(initial)
+  instance[INIT_SNAPSHOT] = instance.serialize(initial)
   instance[LAST_SNAPSHOT] = instance[INIT_SNAPSHOT]
 }
 
-const filterSnapshotOfStores = (serializedSnapshot, storeNames) => {
-  const stores = JSON.parse(serializedSnapshot)
+const filterSnapshotOfStores = (instance, serializedSnapshot, storeNames) => {
+  const stores = instance.deserialize(serializedSnapshot)
   const storesToReset = storeNames.reduce((obj, name) => {
     if (!stores[name]) {
       throw new ReferenceError(`${name} is not a valid store`)
@@ -278,7 +278,7 @@ const filterSnapshotOfStores = (serializedSnapshot, storeNames) => {
     obj[name] = stores[name]
     return obj
   }, {})
-  return JSON.stringify(storesToReset)
+  return instance.serialize(storesToReset)
 }
 
 const createStoreFromObject = (alt, StoreModel, key, saveStore) => {
@@ -334,6 +334,8 @@ const createStoreFromObject = (alt, StoreModel, key, saveStore) => {
 
 class Alt {
   constructor(config = {}) {
+    this.serialize = config.serialize || JSON.stringify
+    this.deserialize = config.deserialize || JSON.parse
     this.dispatcher = config.dispatcher || new Dispatcher()
     this.actions = {}
     this.stores = {}
@@ -471,10 +473,10 @@ class Alt {
 
   takeSnapshot(...storeNames) {
     const state = snapshot(this, ...storeNames)
-    this[LAST_SNAPSHOT] = JSON.stringify(
-      assign(JSON.parse(this[LAST_SNAPSHOT]), state)
+    this[LAST_SNAPSHOT] = this.serialize(
+      assign(this.deserialize(this[LAST_SNAPSHOT]), state)
     )
-    return JSON.stringify(state)
+    return this.serialize(state)
   }
 
   rollback() {
@@ -488,7 +490,7 @@ class Alt {
 
   recycle(...storeNames) {
     const initialSnapshot = storeNames.length
-      ? filterSnapshotOfStores(this[INIT_SNAPSHOT], storeNames)
+      ? filterSnapshotOfStores(this, this[INIT_SNAPSHOT], storeNames)
       : this[INIT_SNAPSHOT]
 
     setAppState(this, initialSnapshot, (store) => {
@@ -500,7 +502,7 @@ class Alt {
   }
 
   flush() {
-    const state = JSON.stringify(snapshot(this))
+    const state = this.serialize(snapshot(this))
     this.recycle()
     return state
   }
